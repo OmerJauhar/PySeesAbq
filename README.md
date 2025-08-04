@@ -151,11 +151,3 @@ node(1, 0.0, 0.0, 0.0)
 node(2, 10.0, 0.0, 0.0)
 ...
 ```
-
-## Documentation
-
-For detailed documentation, visit [docs](docs/README.md).
-
-## License
-
-MIT License
