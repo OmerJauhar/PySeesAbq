@@ -195,14 +195,11 @@ def test_convert_elements():
 
 ## 🆘 Getting Help
 
-- **Discord/Slack**: [Link if available]
+
 - **GitHub Discussions**: For general questions
 - **Issues**: For bugs and feature requests
-- **Email**: [maintainer email]
+- **Email**: umerjouhar31@gmail.com
 
-## 📄 License
-
-By contributing to PySeesAbq, you agree that your contributions will be licensed under the same MIT License that covers the project.
 
 ---
 

@@ -14,7 +14,7 @@ This document provides setup instructions for the PySeesAbq internal tool at RAP
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/rapid-clio/PySeesAbq.git
+   git clone https://github.com/OmerJauhar/PySeesAbq.git
    cd PySeesAbq
    ```
 
@@ -96,7 +96,7 @@ umask 027
 
 For support and questions:
 
-- **Technical Issues**: Contact Omer Jauhar (omer.jauhar@rapid-clio.com)
+- **Technical Issues**: Contact Omer Jauhar 
 - **Feature Requests**: Submit through GitHub issues
 - **Training**: Contact Omer Jauhar for training sessions
 - **Documentation**: Refer to GitHub repository and documentation

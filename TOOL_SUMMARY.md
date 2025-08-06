@@ -55,7 +55,7 @@ PySeesAbq has been successfully converted from an open-source tool to a professi
 
 ```bash
 # For users
-git clone https://github.com/rapid-clio/PySeesAbq.git
+git clone https://github.com/OmerJauhar/PySeesAbq.git
 cd PySeesAbq
 pip install -e .
 
