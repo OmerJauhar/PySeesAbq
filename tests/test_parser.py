@@ -4,7 +4,7 @@ Tests for the Abaqus parser module.
 import unittest
 import os
 import tempfile
-from abaqus2openseespy.parser import AbaqusParser
+from pyseesabq.parser import AbaqusParser
 
 class TestAbaqusParser(unittest.TestCase):
     """Test cases for the AbaqusParser class."""

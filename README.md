@@ -1,52 +1,272 @@
-# Abaqus to OpenSeesPy Converter
+# PySeesAbq
 
-A Python tool for converting Abaqus `.inp` files to OpenSeesPy Python scripts.
+<div align="center">
 
-## Features
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)]()
+[![Internal Tool](https://img.shields.io/badge/Type-Internal%20Tool-orange.svg)]()
 
-- Converts Abaqus nodes to OpenSeesPy node definitions
-- Maps Abaqus elements (S4R, S3, C3D8, etc.) to appropriate OpenSeesPy elements
-- Translates materials, sections, boundary conditions, and loads
-- Handles element sets and node sets
-- Sets up a basic static analysis framework
+**Internal RAPID-CLIO Tool for Converting Abaqus .inp files to OpenSeesPy Python scripts**
 
-## Installation
+*Proprietary finite element model conversion tool for internal use*
+
+</div>
+
+## 🚀 Features
+
+- **Complete Model Conversion**: Converts nodes, elements, materials, sections, boundary conditions, and loads
+- **Wide Element Support**: Handles shell (S4R, S3), solid (C3D8, C3D4), beam (B31), and truss (T3D2) elements
+- **Material Translation**: Maps Abaqus material properties to OpenSeesPy format
+- **Boundary Conditions**: Translates constraints and applied loads
+- **Command Line Interface**: Easy-to-use CLI for batch processing
+- **Python API**: Programmatic access for custom workflows
+- **Professional Output**: Clean, well-documented OpenSeesPy scripts
+- **Error Handling**: Comprehensive validation and helpful error messages
+
+## 📦 Installation
+
+### Internal Installation
+
+This is an internal RAPID-CLIO tool. Install directly from the source repository:
 
 ```bash
-pip install abaqus2openseespy
-```
-
-Or install from source:
-
-```bash
-git clone https://github.com/username/abaqus2openseespy.git
-cd abaqus2openseespy
+git clone https://github.com/rapid-clio/PySeesAbq.git
+cd PySeesAbq
 pip install -e .
 ```
 
-## Usage
-
-### Command Line Interface
+### For Development
 
 ```bash
-abaqus2openseespy input.inp -o output.py
+git clone https://github.com/rapid-clio/PySeesAbq.git
+cd PySeesAbq
+pip install -e ".[dev]"
+```
+
+### Dependencies
+
+- Python 3.8+
+- click >= 8.0.0
+- colorama >= 0.4.0
+- rich >= 10.0.0
+
+**Note**: This tool is designed for internal RAPID-CLIO use and may require specific configurations or access permissions.
+
+## 🎯 Quick Start
+
+### Command Line Usage
+
+Convert a single file:
+```bash
+pyseesabq convert input.inp
+```
+
+Convert with custom output:
+```bash
+pyseesabq convert input.inp -o output.py
+```
+
+Convert all .inp files in a directory:
+```bash
+pyseesabq batch /path/to/inp/files
+```
+
+Get file information:
+```bash
+pyseesabq info model.inp
 ```
 
 ### Python API
 
 ```python
-from abaqus2openseespy import convert
+from pyseesabq import convert_file, convert
 
-# Convert Abaqus to OpenSeesPy
-convert("input.inp", "output.py")
+# Method 1: Convert file with automatic output naming
+output_path = convert_file("model.inp")
 
-# Or get the OpenSeesPy script as a string
-opensees_script = convert("input.inp", return_string=True)
+# Method 2: Convert with custom output path  
+output_path = convert_file("model.inp", "my_opensees_model.py")
+
+# Method 3: Get script as string
+script_content = convert("model.inp", return_string=True)
+
+# Method 4: Using classes directly
+from pyseesabq import AbaqusParser, AbaqusToOpenSeesConverter
+
+parser = AbaqusParser()
+data = parser.parse("model.inp")
+
+converter = AbaqusToOpenSeesConverter(data)
+script = converter.convert()
 ```
 
-## How It Works
+## 📋 Command Line Reference
 
-The conversion process follows these main steps:
+### Main Commands
+
+- `pyseesabq convert <input.inp>` - Convert single file
+- `pyseesabq batch <directory>` - Convert all .inp files in directory  
+- `pyseesabq info <input.inp>` - Show file information
+- `pyseesabq --version` - Show version
+
+### Convert Options
+
+- `-o, --output PATH` - Output file path
+- `--overwrite` - Overwrite existing output file
+- `-v, --verbose` - Enable verbose output
+- `--dry-run` - Parse and analyze without converting
+
+### Batch Options  
+
+- `-o, --output-dir PATH` - Output directory
+- `--overwrite` - Overwrite existing files
+- `-v, --verbose` - Show detailed progress
+
+## 🏗️ Supported Elements
+
+| Abaqus Type | OpenSeesPy Equivalent | Description |
+|-------------|----------------------|-------------|
+| S4, S4R | ShellMITC4 | 4-node shell elements |
+| S3, S3R | ShellDKGT | 3-node shell elements |
+| C3D8, C3D8R | stdBrick | 8-node brick elements |
+| C3D4 | FourNodeTetrahedron | 4-node tetrahedral elements |
+| B31, B31R | elasticBeamColumn | Beam elements |
+| T3D2, T2D2 | truss | Truss elements |
+
+## 📁 Example Output
+
+### Input Abaqus (.inp)
+```
+*NODE
+1, 0.0, 0.0, 0.0
+2, 1.0, 0.0, 0.0
+*ELEMENT, TYPE=S4R
+1, 1, 2, 3, 4
+*MATERIAL, NAME=STEEL
+*ELASTIC
+210000, 0.3
+```
+
+### Output OpenSeesPy (.py)
+```python
+#!/usr/bin/env python3
+"""
+OpenSeesPy Model - Converted from Abaqus .inp file
+Generated by PySeesAbq on 2025-01-06 12:30:45
+"""
+
+from openseespy.opensees import *
+
+# Initialize OpenSees Model
+wipe()
+model('basic', '-ndm', 3, '-ndf', 6)
+
+# Nodes
+node(1, 0.000000, 0.000000, 0.000000)
+node(2, 1.000000, 0.000000, 0.000000)
+
+# Materials  
+nDMaterial('ElasticIsotropic', 1, 2.100e+11, 0.300, 7850.0)
+
+# Elements
+element('ShellMITC4', 1, 1, 2, 3, 4, 1)
+
+# Analysis Setup
+constraints('Plain')
+numberer('Plain')
+system('BandGeneral')
+analyze(1)
+```
+
+## 🔧 Development
+
+### Setting up Development Environment
+
+```bash
+git clone https://github.com/rapid-clio/PySeesAbq.git
+cd PySeesAbq
+pip install -e ".[dev]"
+```
+
+### Running Tests
+
+```bash
+pytest tests/
+```
+
+### Code Formatting
+
+```bash
+black pyseesabq/
+flake8 pyseesabq/
+```
+
+**Note**: Please follow RAPID-CLIO coding standards and ensure all tests pass before committing changes.
+
+## 📚 Documentation
+
+### File Structure
+```
+PySeesAbq/
+├── pyseesabq/
+│   ├── __init__.py          # Package initialization
+│   ├── cli.py               # Command line interface
+│   ├── core.py              # High-level conversion functions
+│   ├── parser.py            # Abaqus .inp file parser
+│   ├── converter.py         # Abaqus to OpenSeesPy converter
+│   └── mapping.py           # Element/material mappings
+├── tests/                   # Test suite
+├── examples/                # Example files
+├── README.md               # This file
+├── LICENSE                 # MIT license
+└── pyproject.toml          # Project configuration
+```
+
+### API Reference
+
+This is an internal RAPID-CLIO tool. For detailed API documentation, please refer to the internal documentation portal or contact Omer Jauhar.
+
+## 🤝 Contributing
+
+This is an internal RAPID-CLIO tool. For contributions:
+
+1. Follow RAPID-CLIO development guidelines
+2. Create a feature branch from the main branch
+3. Ensure all tests pass and code follows company standards
+4. Submit a pull request for review
+5. Obtain necessary approvals before merging
+
+Please coordinate with Omer Jauhar before making significant changes.
+
+## � Support & Issues
+
+For support with this internal tool:
+
+1. Check the internal knowledge base
+2. Contact Omer Jauhar directly
+3. Submit issues through the GitHub repository
+4. Include relevant .inp files and error logs when reporting issues
+
+## 📄 License
+
+This software is proprietary and confidential. It is developed for internal RAPID-CLIO use only. 
+
+**CONFIDENTIAL AND PROPRIETARY**
+
+This software contains confidential and proprietary information. Unauthorized copying, distribution, or use is strictly prohibited. All rights reserved.
+
+## 🙏 Acknowledgments
+
+- Omer Jauhar (RAPID-CLIO) - Development and maintenance
+- [OpenSeesPy](https://openseespydoc.readthedocs.io/) - The Python version of OpenSees
+- [Abaqus](https://www.3ds.com/products-services/simulia/products/abaqus/) - Reference for .inp file format
+
+---
+
+<div align="center">
+<strong>Internal RAPID-CLIO Tool - Confidential</strong><br>
+For internal use only
+</div>
 
 ### 1. Parsing the Abaqus Input File
 

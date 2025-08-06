@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyseesabq"
+version = "1.0.0"
+description = "RAPID-CLIO internal tool for converting Abaqus .inp files to OpenSeesPy Python scripts"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "Proprietary"}
+authors = [
+    {name = "Omer Jauhar", email = "omer.jauhar@rapid-clio.com"}
+]
+keywords = ["abaqus", "opensees", "finite-element", "structural-analysis", "converter", "internal-tool"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Private :: Do Not Upload",
+]
+dependencies = [
+    "click>=8.0.0",
+    "colorama>=0.4.0",
+    "rich>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0.0",
+    "pytest-cov>=2.0.0",
+    "black>=22.0.0",
+    "flake8>=4.0.0",
+    "mypy>=0.900",
+]
+
+[project.urls]
+Homepage = "https://rapid-clio.com/tools/PySeesAbq"
+Repository = "https://github.com/rapid-clio/PySeesAbq.git"
+Issues = "https://github.com/rapid-clio/PySeesAbq/issues"
+Documentation = "https://docs.rapid-clio.com/PySeesAbq"
+
+[project.scripts]
+pyseesabq = "pyseesabq.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyseesabq*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+pyseesabq = ["*.py"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

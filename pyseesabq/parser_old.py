@@ -1,44 +1,74 @@
 """
 Parser module for Abaqus .inp files.
+
+This module provides comprehensive parsing of Abaqus input files, extracting
+nodes, elements, materials, sections, boundary conditions, loads, and sets.
 """
+
+import logging
+import re
+from pathlib import Path
+from typing import Dict, List, Optional, Union, Any
+
+
+logger = logging.getLogger(__name__)
+
 
 class AbaqusParser:
     """
     Parser for Abaqus .inp files.
     
     This class extracts nodes, elements, materials, sections, boundary conditions,
-    loads, element sets, and node sets from Abaqus input files.
+    loads, element sets, and node sets from Abaqus input files with comprehensive
+    error handling and validation.
     """
     
     def __init__(self):
-        self.nodes = {}          # {node_id: [x, y, z]}
-        self.elements = {}       # {element_id: {"type": type, "nodes": [node_ids]}}
-        self.materials = {}      # {material_name: {property: value}}
-        self.sections = {}       # {section_name: {property: value}}
-        self.boundaries = {}     # {node_id: [dof_constraints]}
-        self.loads = {}          # {node_id: [Fx, Fy, Fz, Mx, My, Mz]}
-        self.element_sets = {}   # {set_name: [element_ids]}
-        self.node_sets = {}      # {set_name: [node_ids]}
-        self.material_mapping = {}  # {section_name: material_name}
+        """Initialize the parser with empty data structures."""
+        self.nodes: Dict[int, List[float]] = {}          # {node_id: [x, y, z]}
+        self.elements: Dict[int, Dict[str, Any]] = {}    # {element_id: {"type": type, "nodes": [node_ids]}}
+        self.materials: Dict[str, Dict[str, float]] = {} # {material_name: {property: value}}
+        self.sections: Dict[str, Dict[str, Any]] = {}    # {section_name: {property: value}}
+        self.boundaries: Dict[int, List[int]] = {}       # {node_id: [dof_constraints]}
+        self.loads: Dict[int, List[float]] = {}          # {node_id: [Fx, Fy, Fz, Mx, My, Mz]}
+        self.element_sets: Dict[str, List[int]] = {}     # {set_name: [element_ids]}
+        self.node_sets: Dict[str, List[int]] = {}        # {set_name: [node_ids]}
+        self.material_mapping: Dict[str, str] = {}       # {section_name: material_name}
         
         # State tracking during parsing
-        self.current_section = None
-        self.current_material = None
-        self.current_elset = None
-        self.current_nset = None
+        self.current_section: Optional[str] = None
+        self.current_material: Optional[str] = None
+        self.current_elset: Optional[str] = None
+        self.current_nset: Optional[str] = None
         
-    def parse(self, inp_file_path):
+    def parse(self, inp_file_path: Union[str, Path]) -> 'AbaqusParser':
         """
         Parse the Abaqus .inp file.
         
         Args:
-            inp_file_path (str): Path to the Abaqus .inp file.
+            inp_file_path: Path to the Abaqus .inp file.
             
         Returns:
-            self: The parser instance with parsed data.
+            The parser instance with parsed data.
+            
+        Raises:
+            FileNotFoundError: If the input file doesn't exist.
+            ValueError: If the file cannot be parsed.
         """
-        with open(inp_file_path, 'r') as f:
-            lines = f.readlines()
+        file_path = Path(inp_file_path)
+        
+        if not file_path.exists():
+            raise FileNotFoundError(f"Input file not found: {file_path}")
+            
+        logger.info(f"Parsing Abaqus file: {file_path}")
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+        except UnicodeDecodeError:
+            # Try with different encoding
+            with open(file_path, 'r', encoding='latin-1') as f:
+                lines = f.readlines()
             
         line_index = 0
         while line_index < len(lines):
@@ -51,22 +81,23 @@ class AbaqusParser:
             
             # Handle section keywords
             if line.startswith('*'):
-                self._parse_keyword(lines, line_index)
+                line_index = self._parse_keyword(lines, line_index)
+            else:
+                line_index += 1
                 
-            line_index += 1
-                
+        logger.info(f"Parsing completed: {len(self.nodes)} nodes, {len(self.elements)} elements")
         return self
     
-    def _parse_keyword(self, lines, start_index):
+    def _parse_keyword(self, lines: List[str], start_index: int) -> int:
         """
         Parse a keyword section from the Abaqus file.
         
         Args:
-            lines (list): All lines in the file.
-            start_index (int): Starting index for the keyword section.
+            lines: All lines in the file.
+            start_index: Starting index for the keyword section.
             
         Returns:
-            int: Next line index to process.
+            Next line index to process.
         """
         line = lines[start_index].strip()
         keyword = line.split(',')[0].strip().lower()
@@ -94,27 +125,36 @@ class AbaqusParser:
         # Skip unknown keywords
         return start_index + 1
     
-    def _parse_nodes(self, lines, start_index):
+    def _parse_nodes(self, lines: List[str], start_index: int) -> int:
         """Parse node definitions."""
         line_index = start_index + 1
+        
         while line_index < len(lines):
             line = lines[line_index].strip()
-            if not line or line.startswith('*') or line.startswith('**'):
+            
+            # Stop if we hit another keyword or empty line
+            if not line or line.startswith('*'):
                 break
                 
-            parts = line.split(',')
-            if len(parts) >= 4:
-                node_id = int(parts[0])
-                x = float(parts[1])
-                y = float(parts[2])
-                z = float(parts[3])
-                self.nodes[node_id] = [x, y, z]
+            # Skip comments
+            if line.startswith('**'):
+                line_index += 1
+                continue
+            
+            try:
+                parts = [part.strip() for part in line.split(',')]
+                if len(parts) >= 4:
+                    node_id = int(parts[0])
+                    x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
+                    self.nodes[node_id] = [x, y, z]
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Failed to parse node at line {line_index + 1}: {line} - {e}")
             
             line_index += 1
             
         return line_index
     
-    def _parse_elements(self, lines, start_index):
+    def _parse_elements(self, lines: List[str], start_index: int) -> int:
         """Parse element definitions."""
         line = lines[start_index].strip()
         parts = line.split(',')
@@ -123,26 +163,44 @@ class AbaqusParser:
         element_type = None
         for part in parts:
             if part.strip().lower().startswith('type='):
-                element_type = part.split('=')[1].strip()
+                element_type = part.strip().split('=')[1].strip()
                 break
+        
+        if not element_type:
+            logger.warning(f"No element type found in line: {line}")
+            return start_index + 1
         
         line_index = start_index + 1
         while line_index < len(lines):
             line = lines[line_index].strip()
-            if not line or line.startswith('*') or line.startswith('**'):
+            
+            # Stop if we hit another keyword or empty line
+            if not line or line.startswith('*'):
                 break
                 
-            parts = line.split(',')
-            if len(parts) >= 2:
-                element_id = int(parts[0])
-                node_ids = [int(node_id.strip()) for node_id in parts[1:] if node_id.strip()]
-                self.elements[element_id] = {"type": element_type, "nodes": node_ids}
+            # Skip comments
+            if line.startswith('**'):
+                line_index += 1
+                continue
+            
+            try:
+                parts = [part.strip() for part in line.split(',')]
+                if len(parts) >= 2:
+                    element_id = int(parts[0])
+                    node_ids = [int(parts[i]) for i in range(1, len(parts))]
+                    self.elements[element_id] = {
+                        'type': element_type,
+                        'nodes': node_ids
+                    }
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Failed to parse element at line {line_index + 1}: {line} - {e}")
             
             line_index += 1
             
         return line_index
     
-    def _parse_material(self, lines, start_index):
+    def _parse_material(self, lines: List[str], start_index: int) -> int:
+    def _parse_material(self, lines: List[str], start_index: int) -> int:
         """Parse material definition."""
         line = lines[start_index].strip()
         parts = line.split(',')
@@ -152,6 +210,13 @@ class AbaqusParser:
             if part.strip().lower().startswith('name='):
                 material_name = part.split('=')[1].strip()
                 break
+        
+        if material_name:
+            self.current_material = material_name
+            if material_name not in self.materials:
+                self.materials[material_name] = {}
+        
+        return start_index + 1
         
         if material_name:
             self.current_material = material_name

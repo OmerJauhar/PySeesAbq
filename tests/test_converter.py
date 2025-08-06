@@ -4,8 +4,8 @@ Tests for the Abaqus to OpenSeesPy converter module.
 import unittest
 import os
 import tempfile
-from abaqus2openseespy.parser import AbaqusParser
-from abaqus2openseespy.converter import AbaqusToOpenSeesConverter, convert
+from pyseesabq.parser import AbaqusParser
+from pyseesabq.converter import AbaqusToOpenSeesConverter, convert
 
 class TestAbaqusToOpenSeesConverter(unittest.TestCase):
     """Test cases for the AbaqusToOpenSeesConverter class."""
